@@ -20,12 +20,12 @@
 package org.kie.kogito.index.jpa.springboot.storage;
 
 import java.util.Collections;
+import java.util.function.Supplier;
 
 import org.kie.kogito.index.jpa.mapper.ProcessDefinitionEntityMapper;
 import org.kie.kogito.index.jpa.storage.JsonPredicateBuilder;
 import org.kie.kogito.index.jpa.storage.ProcessDefinitionEntityStorage;
 import org.kie.kogito.index.model.ProcessDefinition;
-import org.kie.kogito.index.model.ProcessDefinitionKey;
 import org.kie.kogito.process.Processes;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
@@ -51,8 +51,8 @@ public class SpringBootProcessDefinitionEntityStorage extends ProcessDefinitionE
     }
 
     @Override
-    public ProcessDefinition put(ProcessDefinitionKey key, ProcessDefinition value) {
-        return put(key, value, insert -> isolatedTransaction.execute(status -> insert.get()));
+    protected ProcessDefinition wrapInTransaction(Supplier<ProcessDefinition> supplier) {
+        return isolatedTransaction.execute(status -> supplier.get());
     }
 
 }

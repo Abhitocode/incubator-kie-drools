@@ -19,7 +19,6 @@
 package org.kie.kogito.index.jpa.storage;
 
 import java.util.Optional;
-import java.util.function.Function;
 import java.util.function.Supplier;
 
 import org.hibernate.exception.ConstraintViolationException;
@@ -37,7 +36,7 @@ import jakarta.persistence.EntityManager;
 
 import static org.kie.kogito.index.DependencyInjectionUtils.getInstance;
 
-public class ProcessDefinitionEntityStorage extends AbstractStorage<ProcessDefinitionKey, ProcessDefinitionEntity, ProcessDefinition> {
+public abstract class ProcessDefinitionEntityStorage extends AbstractStorage<ProcessDefinitionKey, ProcessDefinitionEntity, ProcessDefinition> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ProcessDefinitionEntityStorage.class);
 
@@ -53,10 +52,10 @@ public class ProcessDefinitionEntityStorage extends AbstractStorage<ProcessDefin
                 e.getVersion()), Optional.ofNullable(getInstance(predicateBuilder)), Optional.ofNullable(getInstance(processes)));
     }
 
-    protected ProcessDefinition put(ProcessDefinitionKey key, ProcessDefinition value,
-            Function<Supplier<ProcessDefinition>, ProcessDefinition> isolatedTransaction) {
+    @Override
+    public ProcessDefinition put(ProcessDefinitionKey key, ProcessDefinition value) {
         try {
-            return isolatedTransaction.apply(() -> {
+            return wrapInTransaction(() -> {
                 super.put(key, value);
                 em.flush();
                 return value;
@@ -67,8 +66,10 @@ public class ProcessDefinitionEntityStorage extends AbstractStorage<ProcessDefin
             }
             LOGGER.info("ProcessDefinition with id '{}' and version '{}' is already present, skipping insert.", key.getId(), key.getVersion());
             LOGGER.debug("Duplicate ProcessDefinition insert suppressed", e);
-            return get(key);
+            return wrapInTransaction(() -> get(key));
         }
     }
+
+    protected abstract ProcessDefinition wrapInTransaction(Supplier<ProcessDefinition> supplier);
 
 }

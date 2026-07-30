@@ -25,7 +25,6 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.kie.kogito.index.jpa.storage.JsonPredicateBuilder;
 import org.kie.kogito.index.jpa.storage.ProcessDefinitionEntityStorage;
 import org.kie.kogito.index.model.ProcessDefinition;
-import org.kie.kogito.index.model.ProcessDefinitionKey;
 import org.kie.kogito.process.Processes;
 
 import jakarta.enterprise.context.ApplicationScoped;
@@ -44,13 +43,9 @@ public class QuarkusProcessDefinitionEntityStorage extends ProcessDefinitionEnti
     }
 
     @Override
-    public ProcessDefinition put(ProcessDefinitionKey key, ProcessDefinition value) {
-        return put(key, value, this::insertInNewTransaction);
-    }
-
     @Transactional(Transactional.TxType.REQUIRES_NEW)
-    protected ProcessDefinition insertInNewTransaction(Supplier<ProcessDefinition> insert) {
-        return insert.get();
+    protected ProcessDefinition wrapInTransaction(Supplier<ProcessDefinition> supplier) {
+        return supplier.get();
     }
 
 }
